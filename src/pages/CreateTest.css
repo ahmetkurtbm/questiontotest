@@ -1,0 +1,107 @@
+.create-main {
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.create-test {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.install-test {
+  display: flex;
+  gap: 1rem;
+}
+
+.test-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+#dynamic-container {
+  padding-left: 55px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.dynamic-divs {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dynamic-div-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.dynamic-div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.line-test {
+  height: 1px;
+  width: 75%;
+  border: 0.3px solid rgb(24, 44, 177);
+}
+
+.first-div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.first-div > div {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.select-difficulty {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(54, 184, 54, 0.419);
+  border-radius: 0.5rem;
+}
+
+.select-subject {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(54, 184, 54, 0.419);
+  border-radius: 0.5rem;
+}
+
+.select-difficulty:focus .select-subject:focus {
+  outline: none;
+}
+
+.select-number {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(54, 184, 54, 0.419);
+  border-radius: 0.5rem;
+}
+
+.btn-create-test {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: rgba(26, 191, 26, 0.358);
+}
