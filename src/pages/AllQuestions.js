@@ -10,6 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import "./AllQuestions.css";
 
 export default function AllQuestions() {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,7 +20,7 @@ export default function AllQuestions() {
     }
     const handleGetQuestionCount = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/questionsCount`, {
+        const response = await fetch(`${BACKEND_URL}/questionsCount`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -64,7 +66,7 @@ export default function AllQuestions() {
     setLoading(true);
     const fetchQuestions = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/questions`, {
+        const response = await fetch(`${BACKEND_URL}/questions`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -90,7 +92,7 @@ export default function AllQuestions() {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/question/${id}`, {
+      const response = await fetch(`${BACKEND_URL}/quesiton/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -220,7 +222,7 @@ export default function AllQuestions() {
   const handleGetQuestion = async (e, id) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/question/${id}`, {
+      const response = await fetch(`${BACKEND_URL}/question${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -252,7 +254,7 @@ export default function AllQuestions() {
   const handleFormSubmit = async (e, id) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5000/question/${id}`, {
+      const response = await fetch(`${BACKEND_URL}/question/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
