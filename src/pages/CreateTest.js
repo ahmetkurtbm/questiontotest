@@ -9,13 +9,15 @@ import Cookies from "js-cookie";
 import Header from "./Header";
 
 export default function CreateTest() {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const navigate = useNavigate();
 
   useEffect(() => {
     if (Cookies.get("login") !== "tahsin") {
       navigate("/login");
     } else {
-      fetch("http://localhost:5000/questions/count")
+      fetch(`${BACKEND_URL}/questions/count`)
         .then((response) => {
           if (!response.ok) {
             throw new Error("Network response was not ok");
@@ -168,7 +170,7 @@ export default function CreateTest() {
         ...divs,
       ];
 
-      const response = await fetch("http://localhost:5000/create-test", {
+      const response = await fetch(`${BACKEND_URL}/create-test`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

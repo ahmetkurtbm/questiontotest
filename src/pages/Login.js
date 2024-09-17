@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,7 +24,7 @@ const Login = () => {
     const data = { username: username, password: password };
 
     try {
-      const response = await fetch("http://localhost:5000/login", {
+      const response = await fetch(`${BACKEND_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

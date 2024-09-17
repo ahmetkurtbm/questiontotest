@@ -7,6 +7,8 @@ import ReactCrop from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 function SaveQuestion() {
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
   const [difficulty, setDifficulty] = useState("Kolay");
   const [subject, setSubject] = useState("Doğal Sayılar");
   const [subjectSearch, setSubjectSearch] = useState("");
@@ -124,7 +126,7 @@ function SaveQuestion() {
     };
 
     try {
-      const response = await fetch("http://localhost:5000/question", {
+      const response = await fetch(`${BACKEND_URL}/question`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
