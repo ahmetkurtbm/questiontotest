@@ -1,70 +1,113 @@
-# Getting Started with Create React App
+# QuestionToTest
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Fotoğraftan ve PDF'ten soru bankası oluşturup, istediğiniz konu/zorluk karışımında test
+PDF'i üreten Next.js uygulaması. Giriş GateHub SSO ile yapılır, her kullanıcının soru
+bankası kendisine özeldir.
 
-## Available Scripts
+## Mimari
 
-In the project directory, you can run:
+| Katman | Teknoloji |
+| --- | --- |
+| Uygulama | Next.js 15 (App Router), tek Vercel projesi |
+| Kimlik | NextAuth v5 → GateHub OIDC sağlayıcısı (`receiptflow` ile aynı desen) |
+| Veri | Postgres (Neon), `pg` ile doğrudan sorgu |
+| Görseller | Vercel Blob — tarayıcıdan doğrudan yükleme |
 
-### `npm start`
+Görseller **veritabanında değil Blob'da** tutulur, tabloda yalnızca URL vardır. Yükleme
+tarayıcıdan doğrudan Blob'a yapıldığı için Vercel fonksiyonlarının ~4,5 MB istek gövdesi
+sınırı devreye girmez.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Ekranlar
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+| Adres | Ne yapar |
+| --- | --- |
+| `/` | Fotoğraftan tek soru ekleme. Çözüm fotoğrafı isteğe bağlı, kırpma desteklenir. |
+| `/pdf` | PDF sayfalarını görüntüleyip soruları ve çözümleri kırparak toplu aktarma. |
+| `/sorular` | Soru bankası: filtre/arama, sayfalama, düzenleme ve silme. |
+| `/test` | Konu/zorluk karışımı belirleyip test üretme ve PDF indirme. |
+| `/login` | GateHub ile giriş. |
 
-### `npm test`
+## Kurulum
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 1. GateHub istemcisi
 
-### `npm run build`
+GateHub panelinden iki OAuth istemcisi kaydedin (bir istemci tek callback URL tutar):
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- `questiontotest` → `https://<vercel-domain>/api/auth/callback/gatehub`
+- `questiontotest-dev` → `http://localhost:3100/api/auth/callback/gatehub`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 2. Ortam değişkenleri
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+`.env.example` dosyasını `.env.local` olarak kopyalayıp doldurun:
 
-### `npm run eject`
+```
+AUTH_SECRET=              # openssl rand -base64 32
+GATEHUB_ISSUER=https://gatehub-ahmetkurt.vercel.app/api/auth
+GATEHUB_CLIENT_ID=
+GATEHUB_CLIENT_SECRET=
+DATABASE_URL=             # Neon connection string
+BLOB_READ_WRITE_TOKEN=    # Vercel Blob (Vercel'de otomatik enjekte edilir)
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 3. Veritabanı
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```bash
+npm install
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+npm run db:init
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 4. Çalıştırma
 
-## Learn More
+```bash
+npm run dev
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Eski verinin taşınması
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Dosya tabanlı eski bankadaki (`tahsinaslanbackend/data/questions.json`) sorular Blob +
+Postgres'e taşınır. Önce uygulamaya bir kez GateHub ile giriş yapın (kullanıcı satırı
+oluşsun), sonra `users` tablosundan `external_user_id` değerini alıp:
 
-### Code Splitting
+```bash
+node scripts/migrate-json-to-db.mjs <gatehub-sub>
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Notlar
 
-### Analyzing the Bundle Size
+- **PDF Türkçe karakterler:** `@react-pdf/renderer`'ın varsayılan Helvetica fontu WinAnsi
+  kodlaması kullandığı için `ş ğ İ ı` basılamıyordu. `public/fonts/` altındaki Liberation
+  Sans (SIL Open Font License) gömülerek çözüldü.
+- **React 19 uyumu:** `@react-pdf/renderer` v3 React 19 ile peer uyumsuzdur ve temiz
+  kurulumu (dolayısıyla Vercel derlemesini) kırar. v4'te sabitlenmiştir — düşürmeyin.
+- **Görsel boyutu:** yüklenen fotoğraflar Blob'a gitmeden önce en uzun kenarı 1400px
+  olacak şekilde küçültülüp JPEG'e çevrilir.
+- **`/api` middleware dışındadır:** route'lar oturumu kendisi kontrol edip JSON 401
+  döner. Middleware'e bırakılırsa `fetch`'e HTML login sayfası gider.
+- **Mobil uyum:** tüm ekranlar 375px genişlikten itibaren yatay kaydırma olmadan çalışır;
+  form alanları 16px (iOS'un otomatik yakınlaştırmasını önler), dokunma hedefleri ≥44px.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## Dizin yapısı
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```
+app/
+  page.js, pdf/, sorular/, test/   dört ekran (client component)
+  login/page.js                    GateHub girişi
+  api/                             route handler'lar
+  theme.css, pages.css             tasarım sistemi
+auth.js                            NextAuth + GateHub OIDC
+middleware.js                      rota koruma
+components/                        Header, PhotoField, MetaFields, Toast
+lib/
+  db.js          pg Pool + ensureUser
+  questions.js   veri erişimi + test seçim mantığı
+  api.js         istemci tarafı çağrılar
+  upload.js      Blob'a doğrudan yükleme
+  image.js       kırpma / küçültme
+  subjects.js    konu listesi (tek kaynak)
+  pdf/           test PDF'i (sorular + cevap anahtarı + çözümler)
+database/schema.sql
+scripts/         db:init, migrate-json-to-db, copy-pdf-worker
+```
