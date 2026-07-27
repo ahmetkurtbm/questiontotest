@@ -7,6 +7,18 @@ import { auth } from "@/auth";
  * ~4,5 MB istek govdesi siniri devreye girmez.
  */
 export async function POST(request) {
+  // Token yoksa @vercel/blob ham bir kutuphane hatasi firlatiyor; kurulum
+  // sirasinda ne yapilmasi gerektigi anlasilmiyor.
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return Response.json(
+      {
+        error:
+          "Görsel deposu bağlı değil. Vercel → Storage → Blob store'u bu projeye bağlayın, sonra yeniden deploy edin (BLOB_READ_WRITE_TOKEN).",
+      },
+      { status: 503 }
+    );
+  }
+
   const body = await request.json();
 
   try {
