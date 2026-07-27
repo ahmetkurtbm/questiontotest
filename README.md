@@ -67,7 +67,7 @@ npm run dev
 
 ## Eski verinin taşınması
 
-Dosya tabanlı eski bankadaki (`tahsinaslanbackend/data/questions.json`) sorular Blob +
+Dosya tabanlı eski bankadaki (`requesttotestb/data/questions.json`) sorular Blob +
 Postgres'e taşınır. Önce uygulamaya bir kez GateHub ile giriş yapın (kullanıcı satırı
 oluşsun), sonra `users` tablosundan `external_user_id` değerini alıp:
 

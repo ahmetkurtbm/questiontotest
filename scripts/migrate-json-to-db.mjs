@@ -1,5 +1,5 @@
 /**
- * Eski dosya tabanli soru bankasini (tahsinaslanbackend/data/questions.json)
+ * Eski dosya tabanli soru bankasini (requesttotestb/data/questions.json)
  * Vercel Blob + Postgres'e tasir.
  *
  * Kullanim:
@@ -32,7 +32,7 @@ for (const key of ["DATABASE_URL", "BLOB_READ_WRITE_TOKEN"]) {
 
 const jsonPath = jsonPathArg
   ? resolve(jsonPathArg)
-  : join(here, "..", "..", "tahsinaslanbackend", "data", "questions.json");
+  : join(here, "..", "..", "requesttotestb", "data", "questions.json");
 
 const data = JSON.parse(readFileSync(jsonPath, "utf8"));
 const questions = Array.isArray(data.questions) ? data.questions : [];
