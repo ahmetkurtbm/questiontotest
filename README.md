@@ -27,52 +27,71 @@ sınırı devreye girmez.
 | `/test` | Konu/zorluk karışımı belirleyip test üretme ve PDF indirme. |
 | `/login` | GateHub ile giriş. |
 
-## Kurulum
+## Vercel'de kurulum
 
-### 1. GateHub istemcisi
+### 1. Proje
 
-GateHub panelinden iki OAuth istemcisi kaydedin (bir istemci tek callback URL tutar):
+Vercel'de Next.js projesi olarak içe aktarın. **Settings → Deployment Protection →
+Vercel Authentication kapalı olmalı**; açık kaldığında her istek Vercel SSO'ya yönlenir
+ve GateHub'ın callback'i uygulamaya hiç ulaşamaz.
 
-- `questiontotest` → `https://<vercel-domain>/api/auth/callback/gatehub`
-- `questiontotest-dev` → `http://localhost:3100/api/auth/callback/gatehub`
+### 2. Storage
 
-### 2. Ortam değişkenleri
+**Storage** sekmesinden Neon veritabanı ve Blob store oluşturun; `DATABASE_URL` ve
+`BLOB_READ_WRITE_TOKEN` otomatik enjekte edilir.
 
-`.env.example` dosyasını `.env.local` olarak kopyalayıp doldurun:
+### 3. GateHub istemcisi
+
+GateHub panelinden bir OAuth istemcisi kaydedin. Callback URL, projenin **gerçek**
+production domaini olmalı:
 
 ```
-AUTH_SECRET=              # openssl rand -base64 32
+https://<production-domain>/api/auth/callback/gatehub
+```
+
+Bir istemci tek callback URL tutar; yerel geliştirme yapacaksanız
+`http://localhost:3100/api/auth/callback/gatehub` için ayrı bir istemci gerekir.
+
+### 4. Ortam değişkenleri
+
+**Settings → Environment Variables**:
+
+```
+AUTH_SECRET=              # node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 GATEHUB_ISSUER=https://gatehub-ahmetkurt.vercel.app/api/auth
 GATEHUB_CLIENT_ID=
 GATEHUB_CLIENT_SECRET=
-DATABASE_URL=             # Neon connection string
-BLOB_READ_WRITE_TOKEN=    # Vercel Blob (Vercel'de otomatik enjekte edilir)
 ```
 
-### 3. Veritabanı
+### 5. Şema
+
+`database/schema.sql` içeriğini Neon konsolundaki **SQL Editor**'e yapıştırıp çalıştırın.
+Yerel kurulum yapmak isterseniz alternatif olarak `.env.local` içine `DATABASE_URL`
+koyup `npm run db:init` de kullanılabilir.
+
+## Yerel geliştirme (isteğe bağlı)
+
+`.env.example`'ı `.env.local` olarak kopyalayıp doldurun, sonra:
 
 ```bash
 npm install
 ```
 
 ```bash
-npm run db:init
-```
-
-### 4. Çalıştırma
-
-```bash
 npm run dev
 ```
 
-## Eski verinin taşınması
+`db:init` ve `db:migrate-json` scriptleri `.env.local` dosyasını `--env-file-if-exists`
+ile okur; ayrıca ortam değişkeni tanımlamanız gerekmez.
 
-Dosya tabanlı eski bankadaki (`requesttotestb/data/questions.json`) sorular Blob +
-Postgres'e taşınır. Önce uygulamaya bir kez GateHub ile giriş yapın (kullanıcı satırı
+## Dosya tabanlı eski bankadan taşıma
+
+Eski Express sürümünden kalan `requesttotestb/data/questions.json` varsa içeriği Blob +
+Postgres'e taşınabilir. Önce uygulamaya bir kez GateHub ile giriş yapın (kullanıcı satırı
 oluşsun), sonra `users` tablosundan `external_user_id` değerini alıp:
 
 ```bash
-node scripts/migrate-json-to-db.mjs <gatehub-sub>
+npm run db:migrate-json -- <gatehub-sub>
 ```
 
 ## Notlar

@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:init": "node scripts/init-db.mjs",
-    "db:migrate-json": "node scripts/migrate-json-to-db.mjs",
+    "db:init": "node --env-file-if-exists=.env.local scripts/init-db.mjs",
+    "db:migrate-json": "node --env-file-if-exists=.env.local scripts/migrate-json-to-db.mjs",
     "postinstall": "node scripts/copy-pdf-worker.js"
   },
   "dependencies": {
