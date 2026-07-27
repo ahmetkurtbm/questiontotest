@@ -1,0 +1,53 @@
+import NextAuth from "next-auth";
+
+const issuer =
+  process.env.GATEHUB_ISSUER ?? "https://gatehub-ahmetkurt.vercel.app/api/auth";
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret:
+    process.env.AUTH_SECRET ??
+    "questiontotest-development-secret-change-before-production",
+  pages: { signIn: "/login" },
+  session: { strategy: "jwt" },
+  providers: [
+    {
+      id: "gatehub",
+      name: "GateHub",
+      type: "oidc",
+      issuer,
+      clientId: process.env.GATEHUB_CLIENT_ID ?? "questiontotest-not-configured",
+      clientSecret:
+        process.env.GATEHUB_CLIENT_SECRET ?? "questiontotest-not-configured",
+      authorization: {
+        params: {
+          scope: "openid profile email offline_access",
+          prompt: "select_account",
+        },
+      },
+      checks: ["pkce", "state"],
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name ?? profile.email ?? "QuestionToTest kullanıcısı",
+          email: profile.email,
+          image: profile.picture,
+        };
+      },
+    },
+  ],
+  callbacks: {
+    authorized({ auth: session }) {
+      return Boolean(session?.user);
+    },
+    session({ session, token }) {
+      if (session.user && token.sub) session.user.id = token.sub;
+      return session;
+    },
+  },
+});
+
+export function isGateHubConfigured() {
+  return Boolean(
+    process.env.GATEHUB_CLIENT_ID && process.env.GATEHUB_CLIENT_SECRET
+  );
+}
