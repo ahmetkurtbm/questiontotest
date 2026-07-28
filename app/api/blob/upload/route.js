@@ -52,6 +52,17 @@ export async function POST(request) {
   } catch (error) {
     console.error("Blob yükleme hatası:", error);
 
+    // Store private olarak olusturulmussa public yazma reddediliyor.
+    if (/private store|private access/i.test(error.message || "")) {
+      return Response.json(
+        {
+          error:
+            "Blob store 'private' olarak oluşturulmuş. Görseller doğrudan URL ile gösterildiği için 'public' erişimli bir store gerekiyor: Vercel → Storage → mevcut store'u silin, Access: Public ile yenisini oluşturup projeye bağlayın.",
+        },
+        { status: 503 }
+      );
+    }
+
     // Kimlik bilgisi eksikse ne yapilmasi gerektigini soyle.
     if (/credential|token|storeId|BLOB_STORE_ID/i.test(error.message || "")) {
       return Response.json(
