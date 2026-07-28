@@ -100,8 +100,9 @@ export async function DELETE(request, { params }) {
 
     // Satir gittikten sonra blob'lari da temizle; basarisiz olursa istegi
     // dusurme, sadece logla (yetim blob kalmasi veri kaybindan iyidir).
+    // Kimlik dogrulama OIDC uzerinden yapiliyor, statik token kosulu aranmaz.
     const urls = [existing.question_url, existing.solution_url].filter(Boolean);
-    if (urls.length > 0 && process.env.BLOB_READ_WRITE_TOKEN) {
+    if (urls.length > 0) {
       try {
         await del(urls);
       } catch (blobError) {

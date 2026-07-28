@@ -16,6 +16,10 @@ export async function GET() {
   return Response.json({
     beklenenler: {
       DATABASE_URL: isSet("DATABASE_URL"),
+      // Blob kimligi icin ikisinden biri yeterli: OIDC (Vercel uzerinde
+      // otomatik) veya statik okuma-yazma token'i.
+      BLOB_STORE_ID: isSet("BLOB_STORE_ID"),
+      VERCEL_OIDC_TOKEN: isSet("VERCEL_OIDC_TOKEN"),
       BLOB_READ_WRITE_TOKEN: isSet("BLOB_READ_WRITE_TOKEN"),
       AUTH_SECRET: isSet("AUTH_SECRET"),
       GATEHUB_ISSUER: isSet("GATEHUB_ISSUER"),
