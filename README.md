@@ -1,7 +1,7 @@
 # QuestionToTest
 
 Fotoğraftan ve PDF'ten soru bankası oluşturup, istediğiniz konu/zorluk karışımında test PDF'i
-üreten Next.js uygulaması. PDF sayfasındaki soruları **yapay zekâ (Claude) bulur**: her soruyu
+üreten Next.js uygulaması. PDF sayfasındaki soruları **yapay zekâ (Google Gemini) bulur**: her soruyu
 kırpar, konusunu ve zorluğunu etiketler, cevabını önerir; öğretmen yalnızca kontrol edip kaydeder.
 
 ## Hangi sorunu çözüyor
@@ -16,12 +16,12 @@ seçilir; cevap anahtarı ve çözümler PDF'e otomatik eklenir.
 | Mod | Ne zaman | Veri | Yapay zekâ |
 |---|---|---|---|
 | **Demo** | `DATABASE_URL` boşken (Vercel) | [PGlite](https://pglite.dev): Postgres sunucu sürecinin içinde, 12 örnek soruyla açılır | Anahtar yoksa "Örnek deneme sayfasıyla dene" ile hazır sonuç gösterilir |
-| **Yerel** | `DATABASE_URL` tanımlıyken | Docker'daki PostgreSQL 17, kalıcı | `ANTHROPIC_API_KEY` ile gerçek analiz |
+| **Yerel** | `DATABASE_URL` tanımlıyken | Docker'daki PostgreSQL 17, kalıcı | `GEMINI_API_KEY` ile gerçek analiz |
 
 Hesap sistemi yoktur; uygulama tek öğretmenin kendi bilgisayarında kullanılmak üzere tasarlandı.
 Görseller ayrı bir dosya deposu gerektirmesin diye veritabanında (`images` tablosu) tutulur.
 
-> `/api/ai/detect` ucu kimlik doğrulaması içermez. `ANTHROPIC_API_KEY`'i herkese açık bir
+> `/api/ai/detect` ucu kimlik doğrulaması içermez. `GEMINI_API_KEY`'i herkese açık bir
 > dağıtıma eklemeyin; aksi halde API kullanımınızı herkes tüketebilir.
 
 ## Ekranlar
@@ -38,7 +38,7 @@ Görseller ayrı bir dosya deposu gerektirmesin diye veritabanında (`images` ta
 ```bash
 npm install
 docker compose up -d   # PostgreSQL 17, localhost:5438
-cp .env.example .env.local   # ANTHROPIC_API_KEY'i ekleyin
+cp .env.example .env.local   # GEMINI_API_KEY'i ekleyin
 npm run db:setup       # migration'lar
 npm run dev            # http://localhost:3100
 ```
@@ -47,9 +47,10 @@ npm run dev            # http://localhost:3100
 
 ## Yapay zekâ ile soru bulma
 
-`app/api/ai/detect/route.js` sayfa görselini Claude'a (`claude-opus-5-5`) gönderir ve yapılandırılmış
-çıktı (JSON şeması) ister: her soru için sayfaya oranla kutu (0-1), konu listesinden konu, zorluk
-ve önerilen cevap. Model emin değilse cevap `null` döner ve arayüz öğretmenden seçmesini ister.
+`app/api/ai/detect/route.js` sayfa görselini Google Gemini'ye (`gemini-2.5-flash`, `GEMINI_MODEL` ile
+değiştirilebilir) gönderir ve JSON şemasıyla yapılandırılmış çıktı ister: her soru için kutu
+(`[ymin, xmin, ymax, xmax]`, 0-1000), konu listesinden konu, zorluk ve önerilen cevap. Anahtar
+[Google AI Studio](https://aistudio.google.com/apikey)'dan ücretsiz alınır. Model emin değilse cevap `null` döner ve arayüz öğretmenden seçmesini ister.
 Kutular tarayıcıda sayfa görselinden kırpılır; kaydetmeden önce hepsi düzenlenebilir.
 
 ## Veritabanı ve yedekleme
@@ -75,7 +76,7 @@ Kutular tarayıcıda sayfa görselinden kırpılır; kaydetmeden önce hepsi dü
 ```
 app/
   page.js, pdf/, sorular/, test/   dört ekran (client component)
-  api/ai/detect/                   Claude ile soru bulma
+  api/ai/detect/                   Gemini ile soru bulma
   api/images/                      görsel yükleme ve sunma
   api/questions/, api/create-test/ soru bankası ve test seçimi
 components/                        Header, PhotoField, MetaFields, Toast
