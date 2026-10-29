@@ -4,6 +4,8 @@ Fotoğraftan ve PDF'ten soru bankası oluşturup, istediğiniz konu/zorluk karı
 üreten Next.js uygulaması. PDF sayfasındaki soruları **yapay zekâ (Google Gemini) bulur**: her soruyu
 kırpar, konusunu ve zorluğunu etiketler, cevabını önerir; öğretmen yalnızca kontrol edip kaydeder.
 
+![Soru bankası ekranı](docs/screenshots/ekran.png)
+
 ## Hangi sorunu çözüyor
 
 Öğretmenler yaprak test hazırlarken kitaplardan ve PDF'lerden soruları tek tek kesip Word'e
