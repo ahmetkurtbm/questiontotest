@@ -38,9 +38,6 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <a href="/api/auth/signout" className="nav-signout">
-              Çıkış
-            </a>
           </nav>
 
           <button
@@ -67,9 +64,6 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <a href="/api/auth/signout" className="nav-signout">
-              Çıkış
-            </a>
           </nav>
         </>
       )}

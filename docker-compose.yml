@@ -1,0 +1,19 @@
+# Yerel geliştirme veritabanı. Bağlantı: postgres://questiontotest:questiontotest@localhost:5438/questiontotest
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: questiontotest
+      POSTGRES_PASSWORD: questiontotest
+      POSTGRES_DB: questiontotest
+    ports:
+      - "127.0.0.1:5438:5432"
+    volumes:
+      - questiontotest-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U questiontotest"]
+      interval: 2s
+      retries: 20
+
+volumes:
+  questiontotest-db:

@@ -1,5 +1,5 @@
-import { del } from "@vercel/blob";
-import { currentUser, failure, unauthorized } from "@/lib/session";
+import { imageIdFromUrl } from "@/lib/images";
+import { currentUser, failure } from "@/lib/session";
 import { query } from "@/lib/db";
 import { toDto } from "@/lib/questions";
 
@@ -17,7 +17,6 @@ async function findOwned(ownerId, id) {
 export async function GET(request, { params }) {
   try {
     const user = await currentUser();
-    if (!user) return unauthorized();
 
     const { id } = await params;
     const question = await findOwned(user.id, id);
@@ -32,7 +31,6 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const user = await currentUser();
-    if (!user) return unauthorized();
 
     const { id } = await params;
     const existing = await findOwned(user.id, id);
@@ -90,7 +88,6 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const user = await currentUser();
-    if (!user) return unauthorized();
 
     const { id } = await params;
     const existing = await findOwned(user.id, id);
@@ -98,16 +95,11 @@ export async function DELETE(request, { params }) {
 
     await query("DELETE FROM questions WHERE id = $1 AND owner_id = $2", [id, user.id]);
 
-    // Satir gittikten sonra blob'lari da temizle; basarisiz olursa istegi
-    // dusurme, sadece logla (yetim blob kalmasi veri kaybindan iyidir).
-    // Kimlik dogrulama OIDC uzerinden yapiliyor, statik token kosulu aranmaz.
-    const urls = [existing.question_url, existing.solution_url].filter(Boolean);
-    if (urls.length > 0) {
-      try {
-        await del(urls);
-      } catch (blobError) {
-        console.error("Blob silinemedi:", blobError.message);
-      }
+    // Sorunun kendi görselleri de silinir; örnek (demo) görseller /demo altında
+    // durduğu için imageIdFromUrl onları atlar.
+    const imageIds = [existing.question_url, existing.solution_url].map(imageIdFromUrl).filter(Boolean);
+    if (imageIds.length > 0) {
+      await query("DELETE FROM images WHERE id = ANY($1::uuid[])", [imageIds]);
     }
 
     return Response.json({ ok: true });

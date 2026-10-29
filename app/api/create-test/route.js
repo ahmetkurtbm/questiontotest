@@ -1,10 +1,9 @@
-import { currentUser, failure, unauthorized } from "@/lib/session";
+import { currentUser, failure } from "@/lib/session";
 import { createTest } from "@/lib/questions";
 
 export async function POST(request) {
   try {
     const user = await currentUser();
-    if (!user) return unauthorized();
 
     const body = await request.json();
     const rows = Array.isArray(body?.rows) ? body.rows : [];

@@ -7,7 +7,8 @@ import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import Header from "@/components/Header";
 import { AnswerSelect, DifficultySelect, SubjectSelect } from "@/components/MetaFields";
 import { useToast } from "@/components/Toast";
-import { cropImageElement } from "@/lib/image";
+import { DEMO_PAGE } from "@/lib/demo-data";
+import { cropImageElement, readFileAsDataUrl } from "@/lib/image";
 import { api } from "@/lib/api";
 import { uploadMany } from "@/lib/upload";
 
@@ -37,6 +38,15 @@ export default function ImportPdf() {
   const [targetId, setTargetId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [aiReady, setAiReady] = useState(null);
+  const [detecting, setDetecting] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/ai/detect")
+      .then((response) => response.json())
+      .then((result) => setAiReady(Boolean(result.configured)))
+      .catch(() => setAiReady(false));
+  }, []);
 
   const renderPage = useCallback(async (index) => {
     const doc = docRef.current;
@@ -95,6 +105,80 @@ export default function ImportPdf() {
     } catch (error) {
       toast.error("PDF açılamadı: " + error.message);
       setRendering(false);
+    }
+  };
+
+  /** Dört soruluk hazır deneme sayfası; PDF'i olmayan ziyaretçi akışı bununla dener. */
+  const openSample = () => {
+    docRef.current = null;
+    pageCacheRef.current = new Map();
+    setFileName("ornek-deneme.pdf");
+    setPageCount(1);
+    setPageIndex(1);
+    setCrop(undefined);
+    setPageImage(DEMO_PAGE.image);
+    setDocVersion((version) => version + 1);
+  };
+
+  /**
+   * Sayfadaki soruları yapay zekâ bulur: her soru için kutu, konu, zorluk ve
+   * önerilen cevap gelir; kutular sayfadan kırpılıp listeye eklenir. Anahtar
+   * yokken (Vercel demosu) yalnızca örnek sayfa için hazır sonuç gösterilir.
+   */
+  const detectWithAi = async () => {
+    const image = imageRef.current;
+    if (!image || !pageImage) return;
+
+    setDetecting(true);
+    try {
+      let questions;
+      if (aiReady) {
+        const dataUrl = pageImage.startsWith("data:")
+          ? pageImage
+          : await readFileAsDataUrl(await (await fetch(pageImage)).blob());
+        const response = await fetch("/api/ai/detect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: dataUrl }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Sayfa analiz edilemedi");
+        questions = result.questions;
+      } else if (pageImage === DEMO_PAGE.image) {
+        questions = DEMO_PAGE.questions;
+      } else {
+        toast.info("Bu sürümde yapay zekâ anahtarı yok. Örnek sayfayla deneyebilirsiniz.");
+        return;
+      }
+
+      if (questions.length === 0) {
+        toast.info("Bu sayfada soru bulunamadı");
+        return;
+      }
+
+      const added = questions.map((question, index) => ({
+        id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 6)}`,
+        // cropImageElement ekrandaki boyutla çalışır; oranlar ona göre çevrilir.
+        questionImage: cropImageElement(image, {
+          x: question.box.x * image.width,
+          y: question.box.y * image.height,
+          width: question.box.width * image.width,
+          height: question.box.height * image.height,
+        }),
+        solutionImage: null,
+        subject: question.subject,
+        difficulty: question.difficulty,
+        answer: question.answer || "A",
+        aiAnswerMissing: !question.answer,
+        fromAi: true,
+        page: pageIndex,
+      }));
+      setItems((current) => [...current, ...added]);
+      toast.success(`${added.length} soru bulundu. Cevapları ve kırpmaları kontrol edip kaydedin.`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setDetecting(false);
     }
   };
 
@@ -162,12 +246,12 @@ export default function ImportPdf() {
 
     setSaving(true);
     try {
-      // Görseller tek tek doğrudan Blob'a gider; kayıt isteği sadece URL
-      // taşıdığı için toplu aktarım Vercel'in istek gövdesi sınırına takılmaz.
+      // Görseller tek tek yüklenir; kayıt isteği sadece adres taşıdığı için
+      // toplu aktarım istek gövdesi sınırına takılmaz.
       const entries = [];
       items.forEach((item) => {
-        entries.push({ dataUrl: item.questionImage, prefix: "soru" });
-        entries.push({ dataUrl: item.solutionImage, prefix: "cozum" });
+        entries.push({ dataUrl: item.questionImage });
+        entries.push({ dataUrl: item.solutionImage });
       });
 
       const urls = await uploadMany(entries, (done, total) =>
@@ -234,8 +318,11 @@ export default function ImportPdf() {
             {pageCount === 0 ? (
               <div className="empty" style={{ marginTop: 16 }}>
                 <strong>Bir PDF yükleyin</strong>
-                Sayfalar burada görüntülenecek, soruları kırparak toplu şekilde
-                soru bankasına aktarabileceksiniz.
+                Sayfalar burada görüntülenecek, soruları yapay zekâyla ya da elle kırparak
+                toplu şekilde soru bankasına aktarabileceksiniz.
+                <button type="button" className="btn btn-outline btn-sm" style={{ marginTop: 12 }} onClick={openSample}>
+                  Örnek deneme sayfasıyla dene
+                </button>
               </div>
             ) : (
               <>
@@ -275,7 +362,16 @@ export default function ImportPdf() {
                 </div>
 
                 <div className="row" style={{ marginTop: 14 }}>
-                  <button type="button" className="btn btn-primary btn-sm" onClick={addQuestion}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={detectWithAi}
+                    disabled={detecting || rendering || !pageImage}
+                    title={aiReady === false ? "Demo: yalnızca örnek sayfada çalışır" : undefined}
+                  >
+                    {detecting ? "Sorular aranıyor…" : "✦ Soruları yapay zekâyla bul"}
+                  </button>
+                  <button type="button" className="btn btn-outline btn-sm" onClick={addQuestion}>
                     + Soru olarak ekle
                   </button>
                   <button
@@ -340,7 +436,7 @@ export default function ImportPdf() {
             {items.length === 0 ? (
               <div className="empty">
                 <strong>Henüz soru eklemediniz</strong>
-                Sayfa üzerinde bir soruyu kutu içine alıp “Soru olarak ekle” deyin.
+                “Soruları yapay zekâyla bul” deyin ya da bir soruyu kutu içine alıp “Soru olarak ekle”yi kullanın.
               </div>
             ) : (
               <div className="staged-grid">
@@ -351,7 +447,10 @@ export default function ImportPdf() {
                   >
                     <div className="row-between">
                       <span className="badge badge-brand">#{index + 1}</span>
-                      <span className="card-hint">Sayfa {item.page}</span>
+                      <span className="card-hint">
+                        Sayfa {item.page}
+                        {item.fromAi && (item.aiAnswerMissing ? " · Yapay zekâ cevabı bulamadı, seçin" : " · Yapay zekâ önerisi")}
+                      </span>
                     </div>
 
                     <div className="staged-images">

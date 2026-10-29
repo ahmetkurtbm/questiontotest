@@ -1,4 +1,4 @@
-import { currentUser, failure, unauthorized } from "@/lib/session";
+import { currentUser, failure } from "@/lib/session";
 import { insertQuestions, listQuestions, validateQuestion } from "@/lib/questions";
 
 // Filtreler govdede geldigi icin liste de POST; sunucuda tum veri setine
@@ -6,7 +6,6 @@ import { insertQuestions, listQuestions, validateQuestion } from "@/lib/question
 export async function POST(request) {
   try {
     const user = await currentUser();
-    if (!user) return unauthorized();
 
     const body = await request.json();
 

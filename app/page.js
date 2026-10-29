@@ -29,8 +29,8 @@ export default function AddQuestion() {
     try {
       // Görseller önce doğrudan Blob'a yüklenir; API'ye yalnızca URL gider.
       const [questionUrl, solutionUrl] = await uploadMany([
-        { dataUrl: questionImage, prefix: "soru" },
-        { dataUrl: solutionImage, prefix: "cozum" },
+        { dataUrl: questionImage },
+        { dataUrl: solutionImage },
       ]);
 
       const saved = await api.createQuestion({ questionUrl, solutionUrl, ...meta });

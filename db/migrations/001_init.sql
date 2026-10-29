@@ -1,11 +1,8 @@
--- QuestionToTest şeması (Neon / Postgres)
--- Kurulum: npm run db:init
-
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- QuestionToTest şeması. Yerelde `npm run db:setup`, demo modunda açılışta uygulanır.
 
 CREATE TABLE IF NOT EXISTS users (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  external_user_id text NOT NULL UNIQUE,   -- GateHub OIDC `sub`
+  external_user_id text NOT NULL UNIQUE,
   display_name     text NOT NULL,
   email            text,
   created_at       timestamptz NOT NULL DEFAULT NOW(),
@@ -26,9 +23,17 @@ CREATE TABLE IF NOT EXISTS questions (
   UNIQUE (owner_id, no)
 );
 
--- Liste/filtre ve test oluşturma sorgularının hepsi owner_id ile kapsanıyor.
 CREATE INDEX IF NOT EXISTS questions_owner_created_idx
   ON questions (owner_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS questions_owner_subject_difficulty_idx
   ON questions (owner_id, subject, difficulty);
+
+-- Soru ve çözüm görselleri. Ayrı bir dosya deposu (Blob/S3) gerektirmesin diye
+-- veritabanında tutulur; /api/images/<id> adresinden sunulur.
+CREATE TABLE IF NOT EXISTS images (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  content_type  text NOT NULL,
+  data          bytea NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT NOW()
+);
