@@ -1,4 +1,4 @@
-import { imageIdFromUrl } from "@/lib/images";
+import { imageIdFromUrl, isOwnImageUrl } from "@/lib/images";
 import { currentUser, failure } from "@/lib/session";
 import { query } from "@/lib/db";
 import { toDto } from "@/lib/questions";
@@ -67,6 +67,9 @@ export async function PUT(request, { params }) {
     }
 
     if (body.solutionUrl !== undefined) {
+      if (body.solutionUrl && !isOwnImageUrl(body.solutionUrl)) {
+        return Response.json({ error: "Çözüm görseli adresi geçersiz" }, { status: 400 });
+      }
       sets.push(`solution_url = ${bind(body.solutionUrl || null)}`);
     }
 

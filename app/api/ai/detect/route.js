@@ -1,6 +1,10 @@
 import { ANSWER_KEYS, DIFFICULTIES, SUBJECTS } from "@/lib/subjects";
+import { clientIp, createRateLimiter } from "@/lib/rate-limit";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+// base64 gövde ham boyuttan ~%33 büyüktür; JSON zarfı için biraz pay bırakılır.
+const MAX_BODY_CHARS = Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 1024;
+const DEFAULT_HOURLY_LIMIT = 20;
 const DATA_URL = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/;
 
 // Gemini kutuları kendi alıştığı biçimde, [ymin, xmin, ymax, xmax] olarak 0-1000
@@ -46,7 +50,26 @@ export async function POST(request) {
     return Response.json({ error: "GEMINI_API_KEY tanımlı değil; yapay zekâ özelliği kapalı." }, { status: 503 });
   }
 
-  const { image } = (await request.json().catch(() => ({}))) || {};
+  // Anahtar tanımlandığında endpoint kimlik doğrulamasız olduğundan IP başına saatlik sınır uygulanır.
+  const limit = Number(process.env.AI_DETECT_HOURLY_LIMIT) || DEFAULT_HOURLY_LIMIT;
+  globalThis.aiDetectLimiter ??= createRateLimiter();
+  if (!globalThis.aiDetectLimiter.allow(clientIp(request.headers), limit)) {
+    return Response.json({ error: "Saatlik yapay zekâ analiz sınırına ulaşıldı. Daha sonra tekrar deneyin." }, { status: 429 });
+  }
+
+  if (Number(request.headers.get("content-length") || 0) > MAX_BODY_CHARS) {
+    return Response.json({ error: "İstek gövdesi çok büyük." }, { status: 413 });
+  }
+  const text = await request.text();
+  if (text.length > MAX_BODY_CHARS) {
+    return Response.json({ error: "İstek gövdesi çok büyük." }, { status: 413 });
+  }
+
+  let payload = null;
+  try {
+    payload = JSON.parse(text);
+  } catch {}
+  const { image } = payload || {};
   const match = DATA_URL.exec(typeof image === "string" ? image : "");
   if (!match) return Response.json({ error: "Sayfa görseli JPEG, PNG veya WebP olmalı." }, { status: 400 });
   const [, mediaType, data] = match;

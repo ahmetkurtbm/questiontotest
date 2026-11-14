@@ -1,5 +1,5 @@
 import { currentUser, failure } from "@/lib/session";
-import { createTest } from "@/lib/questions";
+import { createTest, validateTestRows } from "@/lib/questions";
 
 export async function POST(request) {
   try {
@@ -11,6 +11,9 @@ export async function POST(request) {
     if (rows.length === 0) {
       return Response.json({ error: "En az bir satır ekleyin" }, { status: 400 });
     }
+
+    const limitError = validateTestRows(rows);
+    if (limitError) return Response.json({ error: limitError.error }, { status: limitError.status });
 
     const result = await createTest(user.id, rows);
 

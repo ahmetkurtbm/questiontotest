@@ -3,13 +3,13 @@ import { validateQuestion } from "@/lib/questions";
 import { SUBJECTS } from "@/lib/subjects";
 import { approximateSizeKb } from "@/lib/image";
 
-const valid = { questionUrl: "/api/images/1", subject: "Türev Kavramı", difficulty: "Kolay", answer: "A" };
+const valid = { questionUrl: "/api/images/11111111-1111-4111-8111-111111111111", subject: "Türev Kavramı", difficulty: "Kolay", answer: "A" };
 
 describe("validateQuestion", () => {
   it("geçerli soruyu kabul eder ve alanları düzeltir", () => {
     const { value } = validateQuestion({ ...valid, subject: "  Türev Kavramı ", difficulty: "ORTA", answer: "c" });
     expect(value).toEqual({
-      questionUrl: "/api/images/1",
+      questionUrl: "/api/images/11111111-1111-4111-8111-111111111111",
       solutionUrl: null,
       subject: "Türev Kavramı",
       difficulty: "Orta",

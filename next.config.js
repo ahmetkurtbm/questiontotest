@@ -8,6 +8,18 @@ const nextConfig = {
       "./node_modules/@electric-sql/pglite/dist/{pglite.wasm,pglite.data,initdb.wasm}",
     ],
   },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        ],
+      },
+    ];
+  },
   webpack: (config) => {
     // @react-pdf/renderer ve pdfjs-dist Node'a ozgu "canvas" modulunu opsiyonel
     // olarak cozmeye calisiyor; tarayici derlemesinde devre disi birakiyoruz.
