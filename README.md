@@ -73,6 +73,16 @@ Kutular tarayıcıda sayfa görselinden kırpılır; kaydetmeden önce hepsi dü
 - **Mobil uyum:** tüm ekranlar 375px genişlikten itibaren yatay kaydırma olmadan çalışır;
   form alanları 16px (iOS'un otomatik yakınlaştırmasını önler), dokunma hedefleri ≥44px.
 
+## Güvenlik ve sınırlar
+
+- Herkese açık demo veritabanı sunucu belleğinde (PGlite) çalışır. Bellek dolmasın diye demoda en fazla 300 görsel / 150 MB saklanır (aşılırsa 507). Toplu kayıt 200 soru, test oluşturma 50 satır ile sınırlıdır.
+- Soru görseli adresi yalnızca uygulamanın kendi görselleri olabilir; dış adresler reddedilir.
+- Yapay zekâ ucu kimlik doğrulamasızdır. Anahtar tanımlıysa IP başına saatte 20 istek ve yaklaşık 7 MB gövde sınırı uygulanır; canlı demoda anahtar tanımlı değildir.
+- Hız sınırı sayaçları bellektedir; sunucusuz ortamda her örnek ayrı sayar, yani kaba bir frendir.
+- **Yük testi:** sayfalar yaklaşık 2000 istek/sn, veritabanlı uçlar 300-500 istek/sn verir. 200 eşzamanlı bağlantıda en yavaş %1'lik dilim 1,5 sn civarındadır, hata çıkmaz. 1 MB'lık 400 yüklemelik sel: 132'si kabul edildi, 250'si kotaya takıldı, süreç yaklaşık 700 MB'ta kaldı ve çökmedi.
+
+Ölçümler yerel bir dizüstü bilgisayarda, tek süreçli üretim derlemesiyle ve demo moduyla `autocannon` kullanılarak alındı; kabaca fikir verir, canlı ortam rakamı değildir.
+
 ## Dizin yapısı
 
 ```
