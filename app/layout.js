@@ -7,7 +7,7 @@ export const metadata = {
   description:
     "Fotoğraf ve PDF'ten soru bankası oluşturup karışık test hazırlama aracı",
   manifest: "/manifest.json",
-  icons: { icon: "/favicon.svg", apple: "/favicon.svg" },
+  icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.png" },
 };
 
 export const viewport = {
